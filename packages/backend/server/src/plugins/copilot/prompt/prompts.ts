@@ -63,6 +63,9 @@ export const Scenario = {
   quick_text_generation: [
     'Brainstorm ideas about this',
     'Continue writing',
+    'Describe Repo: file summary',
+    'Describe Repo: tree summary',
+    'Describe Repo: mockup brief',
     'Explain this code',
     'Fix spelling for it',
     'Improve writing for it',
@@ -1883,6 +1886,73 @@ Now apply the \`updates\` to the \`content\`, following the intent in \`op\`, an
       {
         role: 'user',
         content: '{{content}}',
+      },
+    ],
+  },
+  {
+    name: 'Describe Repo: file summary',
+    action: 'Describe Repo: file summary',
+    model: 'gpt-5-mini',
+    optionalModels: ['gpt-5-mini', 'gemini-2.5-flash', 'claude-haiku-4-5'],
+    config: { temperature: 0.2 },
+    messages: [
+      {
+        role: 'system',
+        content: `You summarize a single source file from a code repository.
+
+Reply with ONE paragraph (max 80 words) covering:
+- The file's purpose / responsibility.
+- Its key exported symbols (functions, classes, constants).
+- Notable side effects, external calls, or risks.
+
+Plain prose. No bullet lists. No markdown headings. No code fences. Do not restate the file path or language. If the file is configuration or a manifest, describe what it configures.`,
+      },
+    ],
+  },
+  {
+    name: 'Describe Repo: tree summary',
+    action: 'Describe Repo: tree summary',
+    model: 'claude-sonnet-4-5@20250929',
+    optionalModels: ['claude-sonnet-4-5@20250929', 'gpt-5', 'gemini-2.5-pro'],
+    config: { temperature: 0.3 },
+    messages: [
+      {
+        role: 'system',
+        content: `You are a senior engineer producing a structured description of a code repository.
+
+You receive:
+- The repository URL and HEAD commit.
+- Manifest files (package.json, pyproject.toml, go.mod, etc.) verbatim.
+- One-paragraph summaries for each processed source file.
+
+Produce a markdown report with these top-level sections, in this order:
+## Overview
+## Modules
+## Public API
+## Build & Run
+## Risks & Open Questions
+## Suggested Next Steps
+
+Rules:
+- Use only the evidence provided. If something is unknown, say so explicitly.
+- Prefer concrete claims with file paths in backticks over generic statements.
+- Keep the whole report under ~600 words.
+- No emojis. No claims about license unless a LICENSE file appears in the manifests section.`,
+      },
+    ],
+  },
+  {
+    name: 'Describe Repo: mockup brief',
+    action: 'Describe Repo: mockup brief',
+    model: 'gpt-5-mini',
+    optionalModels: ['gpt-5-mini', 'gemini-2.5-flash'],
+    config: { temperature: 0.6 },
+    messages: [
+      {
+        role: 'system',
+        content: `You write a single-paragraph image prompt for a repository cover mockup.
+
+Given a markdown summary of a code repository, output ONE paragraph (max 60 words) describing a flat, modern, technical illustration suitable for a documentation cover. Include: dominant subject, two or three concrete visual elements drawn from the repo's domain, color palette suggestion, and style cue ("isometric", "blueprint", "minimal line art", etc.). No people. No text in the image. Do not include any preamble — output only the paragraph.`,
       },
     ],
   },
