@@ -1,0 +1,17 @@
+mutation describeRepo($input: DescribeRepoInputType!) {
+  describeRepo(input: $input) {
+    repoUrl
+    commitSha
+    fileCount
+    totalBytes
+    markdown
+    coverImageUrl
+    modelsUsed
+    files {
+      path
+      lang
+      bytes
+      summary
+    }
+  }
+}
