@@ -16,6 +16,11 @@ import {
 } from './context';
 import { CopilotController } from './controller';
 import { CopilotCronJobs } from './cron';
+import {
+  CopilotDescribeRepoResolver,
+  CopilotDescribeRepoService,
+  DescribeRepoQuotaService,
+} from './describe-repo';
 import { CopilotEmbeddingJob } from './embedding';
 import { WorkspaceMcpController } from './mcp/controller';
 import { WorkspaceMcpProvider } from './mcp/provider';
@@ -72,6 +77,10 @@ import {
     // transcription
     CopilotTranscriptionService,
     CopilotTranscriptionResolver,
+    // describe-repo
+    CopilotDescribeRepoService,
+    DescribeRepoQuotaService,
+    CopilotDescribeRepoResolver,
     // workspace embeddings
     CopilotWorkspaceService,
     CopilotWorkspaceEmbeddingResolver,
