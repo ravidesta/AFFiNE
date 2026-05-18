@@ -1,4 +1,6 @@
 export { GitCloneError, shallowClone } from './git';
+export type { QuotaCheckResult } from './quota';
+export { DescribeRepoQuotaService } from './quota';
 export { CopilotDescribeRepoResolver } from './resolver';
 export {
   DESCRIBE_REPO_PROMPT_NAMES,

@@ -19,6 +19,7 @@ import { CopilotCronJobs } from './cron';
 import {
   CopilotDescribeRepoResolver,
   CopilotDescribeRepoService,
+  DescribeRepoQuotaService,
 } from './describe-repo';
 import { CopilotEmbeddingJob } from './embedding';
 import { WorkspaceMcpController } from './mcp/controller';
@@ -78,6 +79,7 @@ import {
     CopilotTranscriptionResolver,
     // describe-repo
     CopilotDescribeRepoService,
+    DescribeRepoQuotaService,
     CopilotDescribeRepoResolver,
     // workspace embeddings
     CopilotWorkspaceService,

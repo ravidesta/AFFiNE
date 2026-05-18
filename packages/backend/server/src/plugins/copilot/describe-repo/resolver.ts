@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -19,6 +20,7 @@ import { CallMetric, Throttle } from '../../../base';
 import { CurrentUser } from '../../../core/auth';
 import { CopilotType } from '../resolver';
 import { GitCloneError } from './git';
+import { DescribeRepoQuotaService } from './quota';
 import { CopilotDescribeRepoService } from './service';
 import type { DescribeRepoResult, FileSummary } from './types';
 import { DescribeRepoInputSchema } from './types';
@@ -93,7 +95,10 @@ class DescribeRepoResultType {
 export class CopilotDescribeRepoResolver {
   private readonly logger = new Logger(CopilotDescribeRepoResolver.name);
 
-  constructor(private readonly service: CopilotDescribeRepoService) {}
+  constructor(
+    private readonly service: CopilotDescribeRepoService,
+    private readonly quota: DescribeRepoQuotaService
+  ) {}
 
   @Mutation(() => DescribeRepoResultType, {
     description:
@@ -101,7 +106,7 @@ export class CopilotDescribeRepoResolver {
   })
   @CallMetric('ai', 'describe_repo')
   async describeRepo(
-    @CurrentUser() _user: CurrentUser,
+    @CurrentUser() user: CurrentUser,
     @Args('input', { type: () => DescribeRepoInputType })
     input: DescribeRepoInputType
   ): Promise<DescribeRepoResult> {
@@ -110,6 +115,12 @@ export class CopilotDescribeRepoResolver {
       parsed = DescribeRepoInputSchema.parse(input);
     } catch (err: any) {
       throw new BadRequestException(err?.message ?? 'invalid input');
+    }
+    const quota = await this.quota.checkAndRecord(user.id);
+    if (!quota.allowed) {
+      throw new ForbiddenException(
+        `describeRepo monthly cap reached (${quota.runsUsed}/${quota.runsAllowed} on tier "${quota.tier.label}")`
+      );
     }
     try {
       return await this.service.describeRepo(parsed);
