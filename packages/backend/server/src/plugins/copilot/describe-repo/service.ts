@@ -47,12 +47,13 @@ export class CopilotDescribeRepoService {
     try {
       const walk = await walkRepo(clone.dir);
 
-      const fileSummaries = await this.summarizeFiles(
-        walk.files,
-        modelOverride,
-        modelsUsed,
-        options.signal
-      );
+      const { summaries: fileSummaries, failedCount } =
+        await this.summarizeFiles(
+          walk.files,
+          modelOverride,
+          modelsUsed,
+          options.signal
+        );
 
       const treeMarkdown = await this.summarizeTree(
         repoUrl,
@@ -86,6 +87,7 @@ export class CopilotDescribeRepoService {
         files: fileSummaries,
         coverImageUrl,
         modelsUsed,
+        failedFileCount: failedCount,
       };
     } finally {
       await clone.cleanup();
@@ -112,8 +114,8 @@ export class CopilotDescribeRepoService {
     override: string | undefined,
     modelsUsed: DescribeRepoResult['modelsUsed'],
     signal?: AbortSignal
-  ): Promise<FileSummary[]> {
-    if (files.length === 0) return [];
+  ): Promise<{ summaries: FileSummary[]; failedCount: number }> {
+    if (files.length === 0) return { summaries: [], failedCount: 0 };
     const prompt = await this.loadPrompt(
       DESCRIBE_REPO_PROMPT_NAMES['file-summary']
     );
@@ -129,6 +131,7 @@ export class CopilotDescribeRepoService {
       length: files.length,
     });
     let next = 0;
+    let failedCount = 0;
 
     const worker = async () => {
       while (true) {
@@ -138,6 +141,7 @@ export class CopilotDescribeRepoService {
         const f = files[idx];
         const userContent = `Path: ${f.relPath}\nLanguage: ${f.lang}\nBytes: ${f.bytes}\n\n\`\`\`${f.lang}\n${f.snippet}\n\`\`\``;
         let summary = '';
+        let failed = false;
         try {
           summary = await provider.text(
             { modelId },
@@ -148,7 +152,9 @@ export class CopilotDescribeRepoService {
           this.logger.warn(
             `file-summary failed for ${f.relPath}: ${err?.message ?? err}`
           );
+          failed = true;
         }
+        if (failed) failedCount++;
         out[idx] = {
           path: f.relPath,
           lang: f.lang,
@@ -165,7 +171,10 @@ export class CopilotDescribeRepoService {
       )
     );
 
-    return out.filter((s): s is FileSummary => !!s);
+    return {
+      summaries: out.filter((s): s is FileSummary => !!s),
+      failedCount,
+    };
   }
 
   private async summarizeTree(

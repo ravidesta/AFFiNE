@@ -44,6 +44,13 @@ class DescribeRepoOptionsInput {
 
   @Field(() => String, { nullable: true })
   modelOverride?: string;
+
+  @Field(() => Boolean, {
+    nullable: true,
+    description:
+      'Bring-your-own-key: indicates the caller supplied their own LLM API key. On tiers with byokWaivesRunCap this waives the monthly run cap.',
+  })
+  byok?: boolean;
 }
 
 @InputType()
@@ -95,6 +102,12 @@ class DescribeRepoResultType {
 
   @Field(() => GraphQLJSON)
   modelsUsed!: Record<string, string>;
+
+  @Field(() => Int, {
+    description:
+      'Number of per-file summary calls that failed and were skipped during this run.',
+  })
+  failedFileCount!: number;
 
   @Field(() => ID, {
     description:
@@ -170,7 +183,9 @@ export class CopilotDescribeRepoResolver {
     } catch (err: any) {
       throw new BadRequestException(err?.message ?? 'invalid input');
     }
-    const quota = await this.quota.checkAndRecord(user.id);
+    const quota = await this.quota.checkAndRecord(user.id, {
+      byok: parsed.options?.byok ?? false,
+    });
     if (!quota.allowed) {
       throw new ForbiddenException(
         `describeRepo monthly cap reached (${quota.runsUsed}/${quota.runsAllowed} on tier "${quota.tier.label}")`

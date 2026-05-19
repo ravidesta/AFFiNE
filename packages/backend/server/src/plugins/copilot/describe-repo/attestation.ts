@@ -1,4 +1,10 @@
-import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto';
+import {
+  createHash,
+  generateKeyPairSync,
+  randomBytes,
+  sign,
+  verify,
+} from 'node:crypto';
 
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -165,7 +171,5 @@ function hashOutput(result: DescribeRepoResult): string {
 }
 
 function randomId(): string {
-  const buf = Buffer.alloc(16);
-  for (let i = 0; i < buf.length; i++) buf[i] = Math.floor(Math.random() * 256);
-  return buf.toString('hex');
+  return randomBytes(16).toString('hex');
 }

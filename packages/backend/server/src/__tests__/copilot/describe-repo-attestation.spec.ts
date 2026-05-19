@@ -23,6 +23,7 @@ function sampleResult(
     ],
     coverImageUrl: undefined,
     modelsUsed: { 'file-summary': 'gpt-5-mini', 'tree-summary': 'gpt-5' },
+    failedFileCount: 0,
     ...overrides,
   };
 }

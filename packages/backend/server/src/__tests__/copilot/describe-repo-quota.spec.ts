@@ -65,3 +65,19 @@ test('peek after exhausting cap reports denied without recording', async t => {
   const peek2 = await q.peek('user-f');
   if (!peek2.allowed) t.is(peek2.runsUsed, 5);
 });
+
+test('BYOK has no effect on a tier without byokWaivesRunCap (free)', async t => {
+  const q = makeService();
+  for (let i = 0; i < 5; i++) await q.checkAndRecord('user-g', { byok: true });
+  const sixth = await q.checkAndRecord('user-g', { byok: true });
+  // Free tier does not waive on BYOK — still capped.
+  t.false(sixth.allowed);
+});
+
+test('peek with BYOK on a non-waiving tier still reports a cap', async t => {
+  const q = makeService();
+  const peek = await q.peek('user-h', { byok: true });
+  t.true(peek.allowed);
+  // Free tier reports runsAllowed=5 even when byok=true (free doesn't waive).
+  if (peek.allowed) t.is(peek.runsAllowed, 5);
+});

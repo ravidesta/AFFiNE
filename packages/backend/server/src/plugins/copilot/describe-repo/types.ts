@@ -5,6 +5,11 @@ export const DescribeRepoOptionsSchema = z
     includeCoverMockup: z.boolean().optional(),
     branch: z.string().trim().min(1).max(200).optional(),
     modelOverride: z.string().trim().min(1).max(200).optional(),
+    /**
+     * Bring-your-own-key: indicates the user supplied their own LLM API key for
+     * this run. On tiers with `byokWaivesRunCap`, this waives the monthly cap.
+     */
+    byok: z.boolean().optional(),
   })
   .strict();
 
@@ -41,6 +46,8 @@ export interface DescribeRepoResult {
   files: FileSummary[];
   coverImageUrl?: string;
   modelsUsed: Partial<Record<SubtaskKind, string>>;
+  /** Number of per-file summary calls that failed and were skipped. */
+  failedFileCount: number;
 }
 
 export const SHALLOW_CLONE_SIZE_CAP_BYTES = 200 * 1024 * 1024;

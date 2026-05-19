@@ -38,9 +38,12 @@ export class DescribeRepoQuotaService {
   private readonly logger = new Logger(DescribeRepoQuotaService.name);
   private readonly recentRuns = new Map<string, number[]>();
 
-  async checkAndRecord(userId: string): Promise<QuotaCheckResult> {
+  async checkAndRecord(
+    userId: string,
+    options: { byok?: boolean } = {}
+  ): Promise<QuotaCheckResult> {
     const tier = await this.getUserTier(userId);
-    const cap = tier.limits.runsPerMonth;
+    const cap = this.effectiveCap(tier, options.byok);
 
     if (cap === null) {
       this.recordRun(userId);
@@ -76,9 +79,12 @@ export class DescribeRepoQuotaService {
   }
 
   /** Inspect quota without recording a run (used by GraphQL quota queries). */
-  async peek(userId: string): Promise<QuotaCheckAllowed | QuotaCheckDenied> {
+  async peek(
+    userId: string,
+    options: { byok?: boolean } = {}
+  ): Promise<QuotaCheckAllowed | QuotaCheckDenied> {
     const tier = await this.getUserTier(userId);
-    const cap = tier.limits.runsPerMonth;
+    const cap = this.effectiveCap(tier, options.byok);
     const used = this.runsInLastMonth(userId);
     if (cap === null) {
       return { allowed: true, tier, runsUsed: used, runsAllowed: null };
@@ -93,6 +99,19 @@ export class DescribeRepoQuotaService {
       };
     }
     return { allowed: true, tier, runsUsed: used, runsAllowed: cap };
+  }
+
+  /**
+   * Apply the tier's `byokWaivesRunCap` flag: if the user supplied their own
+   * model API key and the tier waives the cap for BYOK, treat the cap as
+   * unlimited.
+   */
+  private effectiveCap(
+    tier: TierEntry,
+    byok: boolean | undefined
+  ): number | null {
+    if (byok && tier.byokWaivesRunCap) return null;
+    return tier.limits.runsPerMonth;
   }
 
   private async getUserTier(_userId: string): Promise<TierEntry> {
