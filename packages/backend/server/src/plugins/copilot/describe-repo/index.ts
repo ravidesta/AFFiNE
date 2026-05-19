@@ -1,3 +1,5 @@
+export type { AttestationRecord, VerifyResult } from './attestation';
+export { DescribeRepoAttestationService } from './attestation';
 export { GitCloneError, shallowClone } from './git';
 export type { QuotaCheckResult } from './quota';
 export { DescribeRepoQuotaService } from './quota';
