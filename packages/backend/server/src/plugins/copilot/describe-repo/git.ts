@@ -97,7 +97,10 @@ function runGit(
   });
 }
 
-export async function shallowClone(repoUrl: string): Promise<CloneResult> {
+export async function shallowClone(
+  repoUrl: string,
+  branch?: string
+): Promise<CloneResult> {
   const { normalized } = validateRepoUrl(repoUrl);
 
   const workRoot = await fs.mkdtemp(join(tmpdir(), 'affine-describe-repo-'));
@@ -116,19 +119,17 @@ export async function shallowClone(repoUrl: string): Promise<CloneResult> {
   };
 
   try {
-    await runGit(
-      [
-        'clone',
-        '--depth=1',
-        '--single-branch',
-        '--no-tags',
-        '--filter=blob:limit=512k',
-        normalized,
-        targetDir,
-      ],
-      workRoot,
-      env
-    );
+    const cloneArgs = [
+      'clone',
+      '--depth=1',
+      '--single-branch',
+      '--no-tags',
+      '--filter=blob:limit=512k',
+      ...(branch ? ['--branch', branch] : []),
+      normalized,
+      targetDir,
+    ];
+    await runGit(cloneArgs, workRoot, env);
 
     const size = await dirSize(targetDir);
     if (size > SHALLOW_CLONE_SIZE_CAP_BYTES) {

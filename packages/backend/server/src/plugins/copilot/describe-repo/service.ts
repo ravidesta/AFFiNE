@@ -41,9 +41,10 @@ export class CopilotDescribeRepoService {
     // accompanying the description. Disable explicitly with includeCoverMockup: false.
     const wantCover = input.options?.includeCoverMockup ?? true;
     const modelOverride = input.options?.modelOverride;
+    const branch = input.options?.branch;
     const modelsUsed: DescribeRepoResult['modelsUsed'] = {};
 
-    const clone = await shallowClone(repoUrl);
+    const clone = await shallowClone(repoUrl, branch);
     try {
       const walk = await walkRepo(clone.dir);
 
@@ -69,6 +70,7 @@ export class CopilotDescribeRepoService {
       if (wantCover) {
         coverImageUrl = await this.generateCover(
           treeMarkdown,
+          modelOverride,
           modelsUsed,
           options.signal
         ).catch(err => {
@@ -211,6 +213,7 @@ export class CopilotDescribeRepoService {
 
   private async generateCover(
     treeMarkdown: string,
+    override: string | undefined,
     modelsUsed: DescribeRepoResult['modelsUsed'],
     signal?: AbortSignal
   ): Promise<string | undefined> {
@@ -218,10 +221,11 @@ export class CopilotDescribeRepoService {
       DESCRIBE_REPO_PROMPT_NAMES['mockup-brief']
     );
     if (!briefPrompt) return undefined;
-    const briefModelId = pickModelForSubtask('mockup-brief', [
-      briefPrompt.model,
-      ...briefPrompt.optionalModels,
-    ]);
+    const briefModelId = pickModelForSubtask(
+      'mockup-brief',
+      [briefPrompt.model, ...briefPrompt.optionalModels],
+      override
+    );
     modelsUsed['mockup-brief'] = briefModelId;
     const briefProvider = await this.getTextProvider(briefModelId);
     const brief = await briefProvider.text(

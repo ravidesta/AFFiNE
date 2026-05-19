@@ -67,4 +67,4 @@ export function validateRepoUrl(input: string): ValidatedRepoUrl {
   return { normalized, host };
 }
 
-export const ALLOWED_REPO_HOSTS = ALLOWED_HOSTS;
+export const ALLOWED_REPO_HOSTS: ReadonlySet<string> = new Set(ALLOWED_HOSTS);

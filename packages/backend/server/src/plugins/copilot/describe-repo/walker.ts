@@ -147,7 +147,13 @@ export async function walkRepo(rootDir: string): Promise<WalkResult> {
       const lang = detectLang(rel);
       if (!lang) continue;
 
-      const stat = await fs.stat(abs);
+      let stat;
+      try {
+        stat = await fs.stat(abs);
+      } catch {
+        // Skip files that disappear or become unreadable between readdir and stat.
+        continue;
+      }
       if (stat.size > PER_FILE_SIZE_CAP_BYTES) continue;
 
       if (totalBytes + stat.size > TOTAL_SNIPPET_BUDGET_BYTES) {
@@ -159,7 +165,12 @@ export async function walkRepo(rootDir: string): Promise<WalkResult> {
         continue;
       }
 
-      const buf = await fs.readFile(abs);
+      let buf: Buffer;
+      try {
+        buf = await fs.readFile(abs);
+      } catch {
+        continue;
+      }
       if (buf.includes(0)) continue;
       const snippet = buf.toString('utf8');
 
