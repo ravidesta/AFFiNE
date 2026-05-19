@@ -18,7 +18,7 @@ import {
 
 test('catalog exposes all five named tiers', t => {
   t.deepEqual(
-    TIER_SKUS.sort(),
+    [...TIER_SKUS].sort(),
     [
       'enterprise',
       'free',
